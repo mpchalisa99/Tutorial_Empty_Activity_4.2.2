@@ -5,10 +5,9 @@ import android.content.pm.PackageManager
 import android.media.*
 import android.os.Bundle
 import android.view.MotionEvent
-import android.widget.Button
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import kotlinx.coroutines.*
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetSocketAddress
@@ -30,9 +29,9 @@ class MainActivity : AppCompatActivity() {
 
         startUdpReceiver()
 
-        // Asumsi ada tombol dengan ID btnPtt di activity_main.xml
-        val btnPtt = findViewById<Button>(R.id.btnPtt)
-        btnPtt?.setOnTouchListener { _, event ->
+        // Menjadikan seluruh area layar sebagai tombol PTT
+        val rootView = findViewById<View>(android.R.id.content)
+        rootView.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     startStreaming()
@@ -49,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startStreaming() {
         isRecording = true
-        CoroutineScope(Dispatchers.IO).launch {
+        Thread {
             try {
                 val bufferSize = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
                 val audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize)
@@ -73,7 +72,7 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
+        }.start()
     }
 
     private fun stopStreaming() {
@@ -81,7 +80,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startUdpReceiver() {
-        CoroutineScope(Dispatchers.IO).launch {
+        Thread {
             try {
                 val bufferSize = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
                 val audioTrack = AudioTrack.Builder()
@@ -108,7 +107,6 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
+        }.start()
     }
 }
-
